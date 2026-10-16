@@ -1,0 +1,23 @@
+PACOTE DE PUBLICAÇÃO — J.A.R.V.I.S. Nova 1.2.7
+
+Conteúdo:
+- JARVIS-NOVA-1.2.7-fonte.zip: fonte revisada.
+- .github/workflows/build-apk.yml: workflow no caminho que o GitHub Actions exige.
+
+IMPORTANTE: NÃO envie somente o ZIP para um repositório vazio. O GitHub só reconhece workflows dentro de .github/workflows na raiz do repositório.
+
+PASSOS NO WINDOWS:
+1. Extraia este pacote para uma pasta, por exemplo C:\JarvisNovaBuild.
+2. Instale/abra GitHub Desktop e entre na sua conta GitHub.
+3. No GitHub, crie um repositório NOVO chamado jarvis-nova-1.2.7, com branch main. Pode ser privado.
+4. No GitHub Desktop, use File > Add local repository se a pasta já for um repositório; se não for, use File > New repository e escolha a pasta extraída. Não marque para criar README/licença se isso gerar conflito com os arquivos já existentes.
+5. Confirme que a pasta do repositório contém JARVIS-NOVA-1.2.7-fonte.zip, LEIA-PRIMEIRO.txt e .github\workflows\build-apk.yml.
+6. Faça Commit to main e Publish repository / Push origin.
+7. No site GitHub, abra o repositório > Actions > workflow “Build e testes do J.A.R.V.I.S. Nova”. Aguarde o resultado.
+8. Se não iniciar automaticamente, abra o workflow e clique Run workflow.
+9. Quando ficar verde, abra a execução mais recente > Artifacts > JARVIS-Nova-1.2.7-APK > Download.
+10. Extraia o ZIP do artefato e instale app-debug.apk no Android. Como é APK debug, o Android pode pedir autorização para instalar apps dessa origem.
+
+Se o workflow ficar vermelho, abra a execução, clique no job “Testar e compilar APK debug” e copie o primeiro erro real dos logs. Não compartilhe chaves de API nem senhas.
+
+LIMITAÇÃO: testes estáticos passaram, mas o APK ainda não foi compilado nem testado em aparelho. O workflow verde e a instalação real são os próximos critérios de validação.
