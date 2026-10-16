@@ -70,6 +70,7 @@ jobs:
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
           python3 ensure_jitpack_repository.py android
           python3 patch_gradle.py android/app/build.gradle
+          python3 ensure_jitpack_app_repository.py android/app/build.gradle
           python3 patch_android_version.py android/app/build.gradle VERSAO.json
           python3 patch_visual.py android
 
