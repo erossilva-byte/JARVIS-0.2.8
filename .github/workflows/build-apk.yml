@@ -6,6 +6,16 @@ on:
     branches: [main]
     paths:
       - 'JARVIS-NOVA-*-fonte.zip'
+      - '.github/workflows/build-apk.yml'
+      - 'app.js'
+      - 'main.js'
+      - 'index.html'
+      - 'style.css'
+      - 'patch_*.py'
+      - 'Jarvis*.java'
+      - 'MainActivity.java'
+      - 'package.json'
+      - 'VERSAO.json'
 
 permissions:
   contents: read
@@ -35,16 +45,23 @@ jobs:
           java-version: '17'
 
       - name: Extrair código-fonte enviado ao repositório
+        shell: bash
         run: |
+          set -euo pipefail
           ZIP="$(find . -maxdepth 1 -type f -name 'JARVIS-NOVA-*-fonte.zip' -print | sort | tail -n 1)"
           if [ -n "$ZIP" ]; then
+            rm -rf /tmp/jarvis-source
             mkdir -p /tmp/jarvis-source
             unzip -q "$ZIP" -d /tmp/jarvis-source
             SRC=/tmp/jarvis-source/JARVIS-NOVA
             test -f "$SRC/package.json"
             find "$SRC" -mindepth 1 -maxdepth 1 ! -name '.github' -exec cp -a {} . \;
           fi
-          test -f package.json || { echo 'Envie JARVIS-NOVA-*-fonte.zip para a raiz do repositório ou mantenha os fontes na raiz.'; exit 1; }
+          test -f package.json || { echo 'Envie JARVIS-NOVA-*-fonte.zip para a raiz do repositório.'; exit 1; }
+          test -f JarvisLocalAIPlugin.java
+          test -f MainActivity.java
+          test -f patch_manifest.py
+          test -f patch_gradle.py
 
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
@@ -54,30 +71,32 @@ jobs:
 
       - name: Preparar os recursos web do aplicativo
         run: |
+          set -euo pipefail
           mkdir -p www
           cp index.html style.css app.js apps.js www/
 
       - name: Gerar estrutura nativa do Android
         run: |
+          set -euo pipefail
           npx cap add android
           npx cap sync android
 
       - name: Aplicar identidade, permissões, versão e detector local
-        id: native-patches
         run: |
+          set -euo pipefail
           D=android/app/src/main/java/com/jarvis/nova
           mkdir -p "$D"
-          cp MainActivity.java JarvisBackgroundPlugin.java JarvisService.java JarvisUtilPlugin.java JarvisAlarmReceiver.java JarvisAlarmScheduler.java JarvisBootReceiver.java JarvisNotificationListener.java "$D/"
+          cp MainActivity.java JarvisBackgroundPlugin.java JarvisService.java JarvisUtilPlugin.java JarvisLocalAIPlugin.java JarvisAlarmReceiver.java JarvisAlarmScheduler.java JarvisBootReceiver.java JarvisNotificationListener.java "$D/"
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
-          python3 ensure_jitpack_repository.py android
           python3 patch_gradle.py android/app/build.gradle
-          python3 ensure_jitpack_app_repository.py android/app/build.gradle
           python3 patch_android_version.py android/app/build.gradle VERSAO.json
           python3 patch_visual.py android
 
       - name: Compilar APK debug
         working-directory: android
+        shell: bash
         run: |
+          set -euo pipefail
           chmod +x gradlew
           if ! ./gradlew assembleDebug --no-daemon; then
             echo "Primeira compilação falhou; tentando novamente sem as personalizações de splash/ícone."
