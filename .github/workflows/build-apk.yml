@@ -5,7 +5,8 @@ on:
   push:
     branches: [main]
     paths:
-      - 'JARVIS-NOVA-1.2.7-fonte.zip'
+      - 'JARVIS-NOVA-*-fonte.zip'
+      - '.github/workflows/build-apk.yml'
 
 permissions:
   contents: read
@@ -36,14 +37,15 @@ jobs:
 
       - name: Extrair código-fonte enviado ao repositório
         run: |
-          if [ -f JARVIS-NOVA-1.2.7-fonte.zip ]; then
+          ZIP="$(find . -maxdepth 1 -type f -name 'JARVIS-NOVA-*-fonte.zip' -print | sort | tail -n 1)"
+          if [ -n "$ZIP" ]; then
             mkdir -p /tmp/jarvis-source
-            unzip -q JARVIS-NOVA-1.2.7-fonte.zip -d /tmp/jarvis-source
+            unzip -q "$ZIP" -d /tmp/jarvis-source
             SRC=/tmp/jarvis-source/JARVIS-NOVA
             test -f "$SRC/package.json"
             find "$SRC" -mindepth 1 -maxdepth 1 ! -name '.github' -exec cp -a {} . \;
           fi
-          test -f package.json || { echo 'Envie JARVIS-NOVA-1.2.7-fonte.zip para a raiz do repositório antes de executar o build.'; exit 1; }
+          test -f package.json || { echo 'Envie JARVIS-NOVA-*-fonte.zip para a raiz do repositório ou mantenha os fontes na raiz.'; exit 1; }
 
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
@@ -89,7 +91,7 @@ jobs:
       - name: Publicar APK e checksum
         uses: actions/upload-artifact@v4
         with:
-          name: JARVIS-Nova-1.2.7-APK
+          name: JARVIS-Nova-1.3.4-APK
           if-no-files-found: error
           path: |
             android/app/build/outputs/apk/debug/app-debug.apk
