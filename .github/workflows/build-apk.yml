@@ -53,15 +53,26 @@ jobs:
             rm -rf /tmp/jarvis-source
             mkdir -p /tmp/jarvis-source
             unzip -q "$ZIP" -d /tmp/jarvis-source
-            SRC=/tmp/jarvis-source/JARVIS-NOVA
-            test -f "$SRC/package.json"
+            # The ZIP may contain a top-level folder with a versioned name, or files directly at its root.
+            PACKAGE="$(find /tmp/jarvis-source -type f -name package.json -not -path '*/node_modules/*' -print -quit)"
+            if [ -z "$PACKAGE" ]; then
+              echo "ERRO: package.json não encontrado dentro de $ZIP. Conteúdo do ZIP:"
+              find /tmp/jarvis-source -maxdepth 4 -type f | head -200
+              exit 1
+            fi
+            SRC="$(dirname "$PACKAGE")"
+            echo "Fonte encontrada em: $SRC"
             find "$SRC" -mindepth 1 -maxdepth 1 ! -name '.github' -exec cp -a {} . \;
           fi
           test -f package.json || { echo 'Envie JARVIS-NOVA-*-fonte.zip para a raiz do repositório.'; exit 1; }
-          test -f JarvisLocalAIPlugin.java
-          test -f MainActivity.java
-          test -f patch_manifest.py
-          test -f patch_gradle.py
+          for f in JarvisLocalAIPlugin.java MainActivity.java patch_manifest.py patch_gradle.py; do
+            if [ ! -f "$f" ]; then
+              echo "ERRO: arquivo obrigatório ausente após extrair a fonte: $f"
+              echo "Arquivos na raiz do repositório:"
+              ls -la
+              exit 1
+            fi
+          done
 
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
