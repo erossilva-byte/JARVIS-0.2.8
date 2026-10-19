@@ -117,8 +117,19 @@ jobs:
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
 
-      - name: Testes estáticos e regressão
-        run: npm run test:all
+      - name: Testes estáticos e regressão (exceto backend local temporariamente desativado)
+        run: |
+          set -euo pipefail
+          node --check app.js
+          node --check main.js
+          node --check apps.js
+          node tests/test_voice_routes.js
+          python3 tests/validate_project.py
+          python3 tests/test_patch_gradle.py
+          python3 tests/test_release_readiness.py
+          python3 tests/test_porcupine_personality.py
+          python3 -m py_compile patch_manifest.py patch_visual.py patch_android_version.py patch_gradle.py
+          python3 tests/test_secure_keys.py
 
       - name: Preparar os recursos web do aplicativo
         run: |
@@ -140,6 +151,8 @@ jobs:
           cp MainActivity.java JarvisBackgroundPlugin.java JarvisService.java JarvisUtilPlugin.java JarvisLocalAIPlugin.java JarvisAlarmReceiver.java JarvisAlarmScheduler.java JarvisBootReceiver.java JarvisNotificationListener.java "$D/"
           python3 patch_manifest.py android/app/src/main/AndroidManifest.xml
           python3 patch_gradle.py android/app/build.gradle
+          # O plugin local foi substituído por um stub compatível; remova também a dependência MediaPipe Java 21.
+          sed -i '/com.google.mediapipe:tasks-genai/d' android/app/build.gradle
           python3 patch_android_version.py android/app/build.gradle VERSAO.json
           python3 patch_visual.py android
 
