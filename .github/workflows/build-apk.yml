@@ -74,6 +74,56 @@ jobs:
             fi
           done
 
+      - name: Desativar temporariamente o backend experimental incompatível com Java 17
+        shell: bash
+        run: |
+          set -euo pipefail
+          # MediaPipe tasks-genai 0.10.27 chega compilado para Java 21 (class 65),
+          # enquanto este projeto Android usa JDK 17 (class 61). O plugin também
+          # usa um tipo ActivityResult inexistente no Capacitor 6.
+          # Mantém a API JS disponível e reporta claramente que a IA local está indisponível,
+          # em vez de impedir a geração do APK inteiro.
+          cat > JarvisLocalAIPlugin.java <<'EOF'
+          package com.jarvis.nova;
+
+          import com.getcapacitor.JSObject;
+          import com.getcapacitor.Plugin;
+          import com.getcapacitor.PluginCall;
+          import com.getcapacitor.PluginMethod;
+          import com.getcapacitor.annotation.CapacitorPlugin;
+
+          @CapacitorPlugin(name = "JarvisLocalAI")
+          public class JarvisLocalAIPlugin extends Plugin {
+              private void unavailable(PluginCall call) {
+                  JSObject out = new JSObject();
+                  out.put("supported", false);
+                  out.put("installed", false);
+                  out.put("runtime", "unavailable");
+                  out.put("note", "A execução de modelos locais foi desativada temporariamente para compatibilidade com Android/JDK 17. Use um provedor de IA configurado.");
+                  call.resolve(out);
+              }
+
+              @PluginMethod public void status(PluginCall call) { unavailable(call); }
+              @PluginMethod public void chooseModel(PluginCall call) {
+                  call.reject("A importação de modelos locais está temporariamente indisponível nesta compilação.");
+              }
+              @PluginMethod public void generate(PluginCall call) {
+                  call.reject("A IA local está temporariamente indisponível. Configure um provedor de IA nas definições.");
+              }
+              @PluginMethod public void removeModel(PluginCall call) { call.resolve(); }
+          }
+          EOF
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path("patch_gradle.py")
+          s = p.read_text(encoding="utf-8")
+          s = s.replace(
+              "local_ai_coordinate = 'implementation \\"com.google.mediapipe:tasks-genai:0.10.27\\"'",
+              "local_ai_coordinate = ''"
+          )
+          p.write_text(s, encoding="utf-8")
+          PY
+
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
 
