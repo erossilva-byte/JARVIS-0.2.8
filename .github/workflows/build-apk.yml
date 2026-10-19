@@ -113,16 +113,6 @@ jobs:
               @PluginMethod public void removeModel(PluginCall call) { call.resolve(); }
           }
           EOF
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path("patch_gradle.py")
-          s = p.read_text(encoding="utf-8")
-          s = s.replace(
-              "local_ai_coordinate = 'implementation \\"com.google.mediapipe:tasks-genai:0.10.27\\"'",
-              "local_ai_coordinate = ''"
-          )
-          p.write_text(s, encoding="utf-8")
-          PY
 
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
