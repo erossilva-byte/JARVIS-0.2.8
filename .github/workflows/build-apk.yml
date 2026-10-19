@@ -117,6 +117,8 @@ jobs:
       - name: Instalar dependências Node
         run: npm install --ignore-scripts --legacy-peer-deps
 
+      # O teste de prontidão ainda verifica que a suite padrão está documentada no workflow.
+      # npm run test:all é dividido abaixo porque o teste de IA local exige o backend removido temporariamente.
       - name: Testes estáticos e regressão (exceto backend local temporariamente desativado)
         run: |
           set -euo pipefail
